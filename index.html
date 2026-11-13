@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Server Status</title>
+<style>
+:root{--bg:#14161a;--card:#1e2229;--fg:#e8eaed;--mute:#9aa0a6;--ok:#4ade80;--warn:#facc15;--bad:#f87171;--acc:#60a5fa}
+@media (prefers-color-scheme:light){:root{--bg:#f3f4f6;--card:#fff;--fg:#1f2937;--mute:#6b7280}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px}
+h1{margin:0 0 4px;font-size:1.6rem}
+.sub{color:var(--mute);margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--card);border-radius:10px;padding:14px}
+.card b{display:block;font-size:1.5rem}
+.card span{color:var(--mute);font-size:.85rem}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid rgba(128,128,128,.2)}
+th{color:var(--mute);font-weight:500;font-size:.85rem}
+a.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;margin:0 0 20px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+</style>
+</head>
+<body>
+<main>
+<h1>Server Status</h1>
+<div class="sub" id="state">Lade ...</div>
+<a class="btn" href="map/">3D-Karte öffnen</a>
+<div class="grid">
+<div class="card"><b id="online">-</b><span>Spieler online</span></div>
+<div class="card"><b id="tps">-</b><span>TPS</span></div>
+<div class="card"><b id="mspt">-</b><span>MSPT (ms)</span></div>
+<div class="card"><b id="event">-</b><span>Aktuelles Event</span></div>
+</div>
+<table>
+<thead><tr><th>Spieler</th><th>Welt</th><th>Position</th><th>Ping</th></tr></thead>
+<tbody id="rows"><tr><td colspan="4">-</td></tr></tbody>
+</table>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const dims={"minecraft:overworld":"Overworld","minecraft:the_nether":"Nether","minecraft:the_end":"End"};
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+async function load(){
+  try{
+    const s=await (await fetch("data/status.json?"+Date.now())).json();
+    const age=(Date.now()-s.updated)/60000;
+    const live=age<20;
+    $("state").innerHTML='<span class="dot" style="background:var(--'+(live?'ok':'bad')+')"></span>'+(live?"Server läuft":"Server evtl. offline")+" · Stand vor "+Math.max(0,Math.round(age))+" Min.";
+    $("online").textContent=s.online+" / "+s.max;
+    $("tps").textContent=s.tps;
+    $("mspt").textContent=s.mspt;
+    $("event").textContent=s.event||"keins";
+    $("rows").innerHTML=s.players.length?s.players.map(p=>{
+      const pos=p.x===undefined?"versteckt":p.x+" "+p.y+" "+p.z;
+      const dim=dims[p.dimension]||p.dimension.replace(/^.*:/,"");
+      return "<tr><td>"+(p.title?"["+esc(p.title)+"] ":"")+esc(p.name)+"</td><td>"+esc(dim)+"</td><td>"+pos+"</td><td>"+p.ping+" ms</td></tr>";
+    }).join(""):'<tr><td colspan="4">Niemand online</td></tr>';
+  }catch(e){$("state").textContent="Noch keine Daten."}
+}
+load();setInterval(load,60000);
+</script>
+</body>
+</html>
