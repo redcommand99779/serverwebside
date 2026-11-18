@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parkour-Rangliste</title>
+<style>
+:root{--bg:#14161a;--card:#1e2229;--fg:#e8eaed;--mute:#9aa0a6;--acc:#60a5fa;--gold:#facc15;--silver:#cbd5e1;--bronze:#d6905a}
+@media (prefers-color-scheme:light){:root{--bg:#f3f4f6;--card:#fff;--fg:#1f2937;--mute:#6b7280}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:24px 16px}
+h1{margin:0 0 4px;font-size:1.6rem}
+.sub{color:var(--mute);margin-bottom:20px}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid rgba(128,128,128,.2)}
+th{color:var(--mute);font-weight:500;font-size:.85rem}
+td.n{width:2.2em;font-weight:600}
+tr:nth-child(1) td.n{color:var(--gold)}tr:nth-child(2) td.n{color:var(--silver)}tr:nth-child(3) td.n{color:var(--bronze)}
+a.back{display:inline-block;color:var(--acc);text-decoration:none;margin-bottom:16px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="./">&larr; Server Status</a>
+<h1>Parkour-Rangliste</h1>
+<div class="sub" id="state">Lade ...</div>
+<table>
+<thead><tr><th>#</th><th>Spieler</th><th>Rekord</th><th>Punkte gesamt</th><th>L&auml;ufe</th></tr></thead>
+<tbody id="rows"><tr><td colspan="5">-</td></tr></tbody>
+</table>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+async function load(){
+  try{
+    const s=await (await fetch("data/status.json?"+Date.now())).json();
+    const list=s.parkour||[];
+    $("state").textContent=list.length?"Die besten "+list.length+" Spieler (Rekord = meiste Bl\u00f6cke in einem Lauf)":"Noch keine L\u00e4ufe.";
+    $("rows").innerHTML=list.length?list.map((p,i)=>"<tr><td class='n'>"+(i+1)+"</td><td>"+esc(p.name)+"</td><td><b>"+p.best+"</b></td><td>"+p.total+"</td><td>"+p.runs+"</td></tr>").join(""):'<tr><td colspan="5">-</td></tr>';
+  }catch(e){$("state").textContent="Noch keine Daten."}
+}
+load();setInterval(load,60000);
+</script>
+</body>
+</html>
