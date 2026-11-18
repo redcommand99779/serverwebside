@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spieler</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<main>
+<h1>Spieler</h1>
+<div class="sub" id="state">Lade ...</div>
+<input type="search" id="q" placeholder="Spieler suchen ...">
+<div id="view"></div>
+</main>
+<script src="nav.js"></script>
+<script>
+var players=[],bossNames={koloss:"Eiserner Koloss",sturm:"Sturmhexe",nether:"Nether-König",leere:"Leerer Wächter",uhrmacher:"Uhrmacher",assassine:"Ender-Assassine",beast:"Ancient Beast",admin:"Administrator"};
+function badgeOf(p){return p.titles&&p.titles.badge?" "+esc(p.titles.badge):""}
+function titleOf(p){return p.titles&&p.titles.title?"["+esc(p.titles.title)+"] ":""}
+function initials(n){return esc(n.slice(0,2).toUpperCase())}
+function list(){
+  var q=document.getElementById("q").value.toLowerCase();
+  var f=players.filter(function(p){return p.name.toLowerCase().indexOf(q)>=0});
+  document.getElementById("view").innerHTML="<div class='grid'>"+f.map(function(p){
+    var pk=p.stats["Parkour-Rekord"]||"0";
+    return "<a class='card' style='text-decoration:none;color:inherit' href='#"+encodeURIComponent(p.name)+"'><span class='avatar'>"+initials(p.name)+"</span><b>"+titleOf(p)+esc(p.name)+badgeOf(p)+"</b><div class='mute'>Spielzeit "+esc(p.stats["Spielzeit"]||"-")+" · Parkour "+esc(pk)+"</div></a>";
+  }).join("")+"</div>";
+}
+function detail(name){
+  var p=players.filter(function(x){return x.name===name})[0];
+  if(!p){list();return}
+  var stats=Object.keys(p.stats).map(function(k){return "<tr><td>"+esc(k)+"</td><td>"+esc(p.stats[k])+"</td></tr>"}).join("");
+  var boss=Object.keys(bossNames).map(function(k){var n=p.bosses&&p.bosses[k]||0;return "<tr><td>"+esc(bossNames[k])+"</td><td>"+n+" Siege</td></tr>"}).join("");
+  var un=(p.titles&&p.titles.unlocked||[]).map(function(t){return "<span class='tag' title='"+esc(t.how)+"'>"+esc(t.text)+"</span>"}).join("")||"<span class='mute'>Noch keine freigeschaltet.</span>";
+  document.getElementById("view").innerHTML="<p><a href='#'>&larr; Alle Spieler</a></p><div class='card'><span class='avatar'>"+initials(p.name)+"</span><b style='font-size:1.3rem'>"+titleOf(p)+esc(p.name)+badgeOf(p)+"</b></div>"
+    +"<h2>Statistik</h2><table><tbody>"+stats+"<tr><td>Battle-Royale-Siege</td><td>"+(p.brWins||0)+"</td></tr></tbody></table>"
+    +"<h2>Bosse</h2><table><tbody>"+boss+"</tbody></table>"
+    +"<h2>Titel und Abzeichen</h2><div class='card'>"+un+"</div>";
+}
+function route(){var h=decodeURIComponent(location.hash.slice(1));if(h)detail(h);else list()}
+getJSON("data/ranking.json").then(function(d){
+  players=d.players.sort(function(a,b){return a.name.localeCompare(b.name)});
+  document.getElementById("state").textContent=players.length+" Spieler mit Werten (alle zehn Minuten aktualisiert).";
+  document.getElementById("q").oninput=function(){location.hash="";list()};
+  window.onhashchange=route;route();
+}).catch(function(){document.getElementById("state").textContent="Noch keine Daten."});
+</script>
+</body>
+</html>

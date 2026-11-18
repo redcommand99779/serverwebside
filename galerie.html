@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galerie</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<main>
+<h1>Galerie</h1>
+<div class="sub" id="state">Lade ...</div>
+<div class="grid" id="list"></div>
+</main>
+<script src="nav.js"></script>
+<script>
+getJSON("data/gallery.json").then(function(d){
+  var s=document.getElementById("state");
+  if(!d.length){s.textContent="Noch keine Bilder. Bilder kommen in den Ordner gallery/ der Webseite.";return}
+  s.textContent=d.length+" Bilder.";
+  document.getElementById("list").innerHTML=d.map(function(f){var n=typeof f==="string"?f:f.file||f.name;return "<a class='card' href='gallery/"+encodeURIComponent(n)+"'><img loading='lazy' style='width:100%;border-radius:6px' src='gallery/"+encodeURIComponent(n)+"' alt='"+esc(n)+"'><div class='mute'>"+esc(n)+"</div></a>"}).join("");
+}).catch(function(){document.getElementById("state").textContent="Noch keine Bilder."});
+</script>
+</body>
+</html>

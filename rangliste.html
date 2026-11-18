@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rangliste</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<main>
+<h1>Rangliste</h1>
+<div class="sub" id="state">Lade ...</div>
+<div class="tabs" id="tabs"></div>
+<table>
+<thead><tr><th>#</th><th>Spieler</th><th id="head">Wert</th></tr></thead>
+<tbody id="rows"><tr><td colspan="3">-</td></tr></tbody>
+</table>
+</main>
+<script src="nav.js"></script>
+<script>
+var data=null,cur=0;
+function show(){
+  var c=data.categories[cur];
+  document.getElementById("head").textContent=c.name;
+  document.getElementById("rows").innerHTML=c.rows.length?c.rows.map(function(r,i){return "<tr><td class='n'>"+(i+1)+"</td><td><a href='spieler.html#"+encodeURIComponent(r.name)+"'>"+esc(r.name)+"</a></td><td>"+esc(r.text)+"</td></tr>"}).join(""):'<tr><td colspan="3">Noch keine Einträge.</td></tr>';
+  Array.prototype.forEach.call(document.querySelectorAll("#tabs button"),function(b,i){b.className=i===cur?"on":""});
+}
+getJSON("data/ranking.json").then(function(d){
+  data=d;
+  document.getElementById("state").textContent="Die besten 15 pro Kategorie (alle zehn Minuten aktualisiert, Bots zählen mit).";
+  document.getElementById("tabs").innerHTML=d.categories.map(function(c,i){return "<button data-i='"+i+"'>"+esc(c.name)+"</button>"}).join("");
+  document.getElementById("tabs").onclick=function(e){var b=e.target.closest("button");if(b){cur=+b.dataset.i;show()}};
+  show();
+}).catch(function(){document.getElementById("state").textContent="Noch keine Daten."});
+</script>
+</body>
+</html>

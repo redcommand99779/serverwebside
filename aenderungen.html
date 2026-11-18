@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neuigkeiten</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<main>
+<h1>Neuigkeiten</h1>
+<div class="sub" id="state">Lade ...</div>
+<input type="search" id="q" placeholder="Suchen ...">
+<div id="list"></div>
+</main>
+<script src="nav.js"></script>
+<script>
+var items=[];
+function draw(){
+  var q=document.getElementById("q").value.toLowerCase();
+  var f=items.filter(function(i){return !q||i.t.toLowerCase().indexOf(q)>=0});
+  var day="",h="";
+  f.forEach(function(i){if(i.d!==day){day=i.d;h+="<h2>"+esc(i.d.split("-").reverse().join("."))+"</h2>"}h+="<div class='card'>"+esc(i.t)+"</div>"});
+  document.getElementById("list").innerHTML=h||"<div class='card'>Nichts gefunden.</div>";
+}
+getJSON("data/changelog.json").then(function(d){
+  items=d;
+  document.getElementById("state").textContent=d.length+" Versionen.";
+  document.getElementById("q").oninput=draw;draw();
+}).catch(function(){document.getElementById("state").textContent="Noch keine Daten."});
+</script>
+</body>
+</html>

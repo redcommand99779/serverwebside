@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rezepte</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<main>
+<h1>Rezepte</h1>
+<div class="sub" id="state">Lade ...</div>
+<input type="search" id="q" placeholder="Rezept oder Zutat suchen ...">
+<div class="grid" id="list"></div>
+<p class="mute">Im Spiel craftest du diese Dinge direkt im Menü <code>/rezepte</code>: Rezept anklicken, Menge wählen und auf Herstellen klicken. Zutaten mit eigenem Namen (zum Beispiel Boss-Essenzen) müssen genau diese Gegenstände sein. Die Rätsel-Rezepte stehen bewusst nicht hier.</p>
+</main>
+<script src="nav.js"></script>
+<script>
+var recipes=[];
+function draw(){
+  var q=document.getElementById("q").value.toLowerCase();
+  var f=recipes.filter(function(r){return !q||r.name.toLowerCase().indexOf(q)>=0||r.grid.join(" ").toLowerCase().indexOf(q)>=0});
+  document.getElementById("list").innerHTML=f.map(function(r){
+    var cells=r.grid.map(function(c){return c?"<div>"+esc(c)+"</div>":"<div class='e'></div>"}).join("");
+    return "<div class='card'><b>"+esc(r.name)+"</b><div class='grid3' style='margin-top:8px'>"+cells+"</div></div>";
+  }).join("")||"<div class='card'>Nichts gefunden.</div>";
+}
+getJSON("data/recipes.json").then(function(d){
+  recipes=d;
+  document.getElementById("state").textContent=d.length+" Rezepte aus dem Rezeptbuch (Mitte = Hauptgegenstand, Kreuz und Ecken = Zutaten).";
+  document.getElementById("q").oninput=draw;draw();
+}).catch(function(){document.getElementById("state").textContent="Noch keine Daten."});
+</script>
+</body>
+</html>

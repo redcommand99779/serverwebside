@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiki</title>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<main>
+<h1>Wiki</h1>
+<div class="sub">Alles, was die Server-Mod kann, kurz erklärt. Rezepte stehen im Spiel unter <code>/rezepte</code> und hier unter <a href="rezepte.html">Rezepte</a>.</div>
+<input type="search" id="q" placeholder="Suchen (zum Beispiel Parkour, Altar, Wurfscheibe) ...">
+<div class="tabs" id="tabs"></div>
+<div id="list"></div>
+</main>
+<script src="nav.js"></script>
+<script>
+var W=[
+["Welten und Minispiele","Parkour","Endlose Sprungbahn auf Höhe 256 in einer eigenen Welt. Nur du kannst auf deinen Blöcken stehen. Steigst du auf den neuen Block, verschwindet der alte und ein neuer erscheint. Jeder 10. Block ist ein goldener Checkpoint. Fällst du, kommst du ohne Schaden zum letzten Checkpoint zurück und verlierst 10 Punkte. Ab 30 Punkten kommen Platten dazu, ab 60 kleine Blöcke, die Sprünge werden bis 120 Punkte länger. Dein Inventar ist dort leer und kommt beim Verlassen zurück. Rekorde 25, 50, 100 und 200 geben Titel.",["/parkour","/parkour leave","/parkour top"]],
+["Welten und Minispiele","Battle Royale","Fortnite-Runde in zwei Arenen (eine Insel und die große Karte): Landung vom Bus, Waffen und Heilung aus Kisten und Nachschubkisten, Bauen mit Wand, Boden, Rampe und Dach, ein Sturm, der sich zusammenzieht. Die Runde läuft in einer eigenen Welt, dein Inventar kommt danach zurück.",["/battleroyale","/battleroyale map","/battleroyale leave","/battleroyale top"]],
+["Welten und Minispiele","Wellen-Arena","Geschlossene Arena, in der immer stärkere Monster-Wellen kommen. Jede Welle gibt Seelen, alle fünf Wellen eine Essenz. Deine Ausrüstung behältst du.",["/wellen","/wellen leave","/wellen top"]],
+["Welten und Minispiele","Mining-Welt","Eigene Welt zum Graben ohne Monster mit etwa dreimal so vielen Erzen und Ancient Debris. Der Zugang ist der Mining-Portal-Block.",[]],
+["Welten und Minispiele","Biom-Portale","Portale in einzelne Biome als eigene Welten. Das Portal-Item wählt das Biom beim Craften.",[]],
+["Welten und Minispiele","PvP-Welt","Flache Arena für Kämpfe ohne Drops. Der Zugang ist der PvP-Portal-Block. Betreiber setzen sie mit /pvp reset zurück.",[]],
+["Welten und Minispiele","Creative-Welt","Eine Welt, in der jeder Creative spielen darf. Dein Überlebens-Inventar bleibt getrennt und kommt beim Zurückkehren wieder. Aus der Creative-Welt kann nichts mit hinausgenommen werden.",["/creative","/survivalinv","/creativeinv"]],
+["Welten und Minispiele","Fußball","Ein Ball mit eigener Physik für das Stadion: Anlaufen schiebt ihn, Linksklick schießt, Rechtsklick lupft, Schleichen und Rechtsklick stoppt. Tore werden auf einer Anzeigetafel gezählt.",[]],
+["Bosse und Events","Bosse","Acht Bosse in eigenen Arenen: Eiserner Koloss, Sturmhexe, Nether-König, Leerer Wächter, Uhrmacher, Ender-Assassine, Ancient Beast und der Administrator. Jeder hat Normal, Hard und Albtraum (Linksklick, Rechtsklick, Umschalt-Klick im Menü). Die Kosten sind Items, die Beute sind Essenzen und Material. Spätere Bosse müssen freigeschaltet werden. Wer mit Chaos-Modus kämpft, bekommt Perks und Glitches.",["/boss","/boss join","/boss leave","/bosstest <boss>"]],
+["Bosse und Events","Tägliche Events","Jeden Abend von 20 bis 22 Uhr läuft ein zufälliges Event: Lifesteal, Stärke, Assassins (Herzen oder Stärke), Hardcore, Manhunt oder Altar. Ankündigungen kommen zehn, fünf und eine Minute vorher.",["/event","/event anzeige bossbar|actionbar|aus"]],
+["Bosse und Events","Altar","Fünf einmalige Waffen (Bone Blade, Bloodlust, Frost Scythe, Vulcan's Crossbow, Wand of Illusion), die an Altären in der Welt hergestellt werden. Jede Waffe gibt es nur einmal. Fähigkeiten liegen auf F (und Schleichen + F). Hinweise zeigen, wie nah der nächste Altar ist.",["/altar","/altar zliste <item>"]],
+["Bosse und Events","Manhunt","Event: Ein Läufer muss vier Aufgaben schaffen, Jäger (Spieler oder Bots) wollen ihn erwischen. Dein Inventar kommt am Ende zurück.",[]],
+["Systeme","Titel und Abzeichen","Freischaltbare Titel (in Klammern vor dem Namen) und Abzeichen (Symbol dahinter), zum Beispiel für Bosse, Fortschritte, Parkour-Rekorde und Zauber. Die Bedingung steht im Menü.",["/titel"]],
+["Systeme","Kosmetik","Partikeleffekte (passiv, beim Sterben, bei Aktionen), Begleiter (86 Tiere und Monster, die dir folgen) und Namensfarben mit Verläufen. Jeder wird durch eine Aufgabe freigeschaltet.",["/kosmetik"]],
+["Systeme","Statistik und Bestenliste","Statistik von dir oder anderen Spielern und Ranglisten in neun Kategorien plus Parkour. Beides auch auf dieser Webseite.",["/stats","/bestenliste"]],
+["Systeme","Seelen und Seelenhändler","Monster geben Seelen (Bosse 25). Mit 150 Seelen, 2 Nether-Sternen und 4 Netherit-Barren rufst du den Seelenhändler für 10 Minuten. Er verkauft dauerhafte Aufwertungen: Herzen, Mana, Stärke, Rüstung, Tempo.",["/seelen","/seelenhaendler"]],
+["Systeme","Mana","Eine Leiste für Zauber. Sie füllt sich von allein und schneller mit Arkan-Rüstung. Zu sehen auf der Erfahrungsleiste, solange du ein Magie-Item hältst.",["/mana"]],
+["Systeme","Rätsel","Drei Rätselketten für den ganzen Server mit Textantworten, Gegenständen und geheimen Orten. Lösungen schalten geheime Rezepte frei.",["/raetsel"]],
+["Systeme","Aufgaben und Einführung","Ein Einführungsbuch und acht Aufgaben mit Belohnungen.",["/aufgaben"]],
+["Systeme","Tpa","Teleportanfragen zwischen Spielern. Die Anfrage gilt 60 Sekunden, Buttons stehen im Chat.",["/tpa [Name]","/tpahere <Name>","/tpaccept","/tpdeny"]],
+["Systeme","Einstellungen","Schalter pro Spieler: Phantome, Nachtsicht, TPS-Leiste, Item-Magnet (nach einem Rätsel), Sprache (Deutsch oder English), Ortsnamen.",["/settings"]],
+["Systeme","AFK und Zuschauer","/afk meldet dich ab (Schlafen zählt dann ohne dich). /s schaltet in den Zuschauermodus und beim zweiten Mal zurück an deinen Startpunkt.",["/afk","/s"]],
+["Systeme","Kopfgeld","Setze Items auf den Kopf eines Spielers. Wer ihn tötet, bekommt alles.",["/kopfgeld","/kopfgeld setzen <Name>","/kopfgeld zurueck <Name>"]],
+["Systeme","Echtzeit","Die Uhrzeit im Spiel ist die echte Zeit, der Mond die echte Mondphase, das Wetter das echte Wetter am Ort der Betreiber.",[]],
+["Systeme","Ortsnamen","Beim Betreten eines neuen Bioms erscheint kurz sein Name, beim ersten Mal mit „Neu entdeckt“. In /settings abschaltbar.",[]],
+["Systeme","Downed","Stirbst du, während der andere online ist, liegst du 5 Minuten am Boden. Der andere kann dich durch Schleichen in deiner Nähe wiederbeleben. Mit /aufgeben stirbst du sofort.",["/aufgeben"]],
+["Blöcke","Reinforced Beacons","Die Beacon-Familie: Wächter-Beacon (schützt 32 Blöcke vor Monster-Spawns und Explosionen), Warp-Stein (Teleport zu anderen Warp-Steinen), Farm-Beacon und Erz-Beacon. Schleichen + Rechtsklick mit leerer Hand zeigt den Bereich.",[]],
+["Blöcke","Storage-Terminal","Ein Menü mit allen Kisten und Fässern in der Nähe, mit Suche. Dazu Crafting-Terminal, Fernbedienung (Terminal von überall), Extender (mehr Reichweite) und Zugangs-Block (Terminal als Block in der Welt).",[]],
+["Blöcke","Farmen","Tripwire-Duper, Knochenmehl-Farm (5 Stufen, Schulker-Füller), Schulker-Schalen-Farm, Obsidian-Farm. Schleichen + Rechtsklick stellt ein, ob ein Redstone-Signal sie an- oder abschaltet. Verbundene Farmen teilen sich die Einstellung.",[]],
+["Blöcke","Chunk Loader","Hält einen Bereich geladen. Das Menü zeigt den Bereich mit einem Partikelrahmen. Mit Redstone-Signal abschaltbar.",[]],
+["Blöcke","Disenchanter und Bibliothek","Der Disenchanter holt Verzauberungen aus Items in Bücher. Die Verzauberungs-Bibliothek speichert Bücher als Ladungen und wendet sie kostenlos an.",[]],
+["Blöcke","Uncrafter","Legt die Zutaten eines gecrafteten Items zurück in das Inventar, ohne Zutaten zu duplizieren.",[]],
+["Blöcke","Biom-Wechsler","Ändert das Biom eines Bereichs (3x3 bis 10x10 Chunks, je nach Stufe).",[]],
+["Blöcke","Pearl-Kanone","Teleportiert dich per Enderperle auf Zielkoordinaten in derselben Dimension. Kostet Perlen und Breeze-Stäbe, zeigt eine Boss-Leiste und ein Protokoll.",[]],
+["Blöcke","Schmiede und Alchemie","Die Schmiede veredelt Waffen, Werkzeuge und Rüstung in fünf Stufen. Der Alchemie-Tisch stellt Tränke und Runen her.",[]],
+["Items","Wurfscheibe","Fernwaffe aus Kupfer, Eisen, Gold, Diamant oder Netherit. Rechtsklick wirft sie, sie fliegt durch Gegner, prallt von Blöcken ab und kommt zurück zu dir. Sie bricht, was ein Schwert schneidet. Netherit schmiedest du aus Diamant. Verzauberbar mit allen Schwert-Verzauberungen, Reach, Velocity und Multishot. Schleichen + Rechtsklick ohne Scheibe in der Hand ruft sie zurück.",[]],
+["Items","Links und Artefakte","Ender-Truhen-Link, Werkbank-Link, Werkstatt-Link (Amboss, Schmiedetisch, Öfen, Brauständer …), Müll-Link, Heim-Link, Schulker-Link, Wetter-Link, Flug-Link. Mit /artifacts lädst du sie hoch und nutzt sie direkt im Menü.",["/artifacts"]],
+["Items","Bau-Werkzeug","Ein Überlebens-WorldEdit, das Items kostet: Bau-Fragment (Treibstoff) und Bau-Stab. Befehle für set, replace, walls, sphere, cyl, copy, paste und undo.",["/bau ..."]],
+["Items","Teleport-Stab und Backup-Kristall","Der Stab teleportiert bis 30 Blöcke zum angesehenen Block. Der Kristall speichert einen Ort und bringt dich einmal zurück.",[]],
+["Items","Fußball und Anzeigetafel","Betreiber bauen Anzeigetafeln aus Karten (Bilder, GIFs, Text, Spielstand).",["/screen ...","/ball ..."]],
+["Magie","Zauberbuch","Zwölf Zauber (Feuer, Blitz, Eis, Heilung, Blinzeln, Wind, Seuche, Beben, Schild, Sog, Meteor, Schleier), gelernt mit Boss-Essenzen. Rechtsklick wirkt, F wechselt den Zauber.",[]],
+["Magie","Runen und Tränke","Zwölf Runen (zum Beispiel Feuer, Eis, Vampir, Arkan) werden am Amboss aufgesetzt, höchstens zwei pro Item. Eigene Tränke (Mond, Schatten, Meer, Mana, Berserker) werden mit Boss-Essenzen gebraut.",[]],
+["Magie","Eigene Verzauberungen","Autoschmelzen, Veinminer, Ultramining, Magnet, Timber, Replant, Spawner-Aufnahme, Pathfinder, Grappling, Grüner Daumen, Enthauptung, Mace-Form, Ascension (hebt Verzauberungen eine Stufe), Reach und Velocity für die Wurfscheibe.",[]]
+];
+var cats=[],cur="Alle";
+W.forEach(function(w){if(cats.indexOf(w[0])<0)cats.push(w[0])});
+function tabs(){document.getElementById("tabs").innerHTML=["Alle"].concat(cats).map(function(c){return "<button data-c='"+esc(c)+"' class='"+(c===cur?"on":"")+"'>"+esc(c)+"</button>"}).join("")}
+function draw(){
+  var q=document.getElementById("q").value.toLowerCase();
+  var f=W.filter(function(w){return (cur==="Alle"||w[0]===cur)&&(!q||(w[1]+" "+w[2]+" "+w[3].join(" ")).toLowerCase().indexOf(q)>=0)});
+  document.getElementById("list").innerHTML=f.map(function(w){
+    return "<div class='card'><span class='tag'>"+esc(w[0])+"</span><b>"+esc(w[1])+"</b><p style='margin:6px 0'>"+esc(w[2])+"</p>"+(w[3].length?"<div>"+w[3].map(function(c){return "<code>"+esc(c)+"</code> "}).join("")+"</div>":"")+"</div>";
+  }).join("")||"<div class='card'>Nichts gefunden.</div>";
+}
+document.getElementById("tabs").onclick=function(e){var b=e.target.closest("button");if(b){cur=b.dataset.c;tabs();draw()}};
+document.getElementById("q").oninput=draw;
+tabs();draw();
+</script>
+</body>
+</html>
