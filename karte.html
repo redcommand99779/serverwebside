@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karte</title>
+<link rel="stylesheet" href="site.css">
+<style>
+main{max-width:1200px}
+#wrap{position:relative;background:#0c0e11;border-radius:10px;overflow:hidden;height:72vh;min-height:320px}
+canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+#info{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:3px 8px;font-size:.82rem;pointer-events:none}
+#zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+#zoom button{width:36px;height:36px;border-radius:8px;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:1.2rem;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>Karte</h1>
+<div class="sub" id="state">Lade ...</div>
+<div class="tabs" id="tabs"><button data-d="overworld" class="on">Oberwelt</button><button data-d="nether">Nether</button><button data-d="end">End</button></div>
+<div id="wrap"><canvas id="cv"></canvas><div id="info">-</div><div id="zoom"><button id="zin">+</button><button id="zout">&minus;</button><button id="zhome" title="Zur Mitte">&#8962;</button></div></div>
+<p class="mute">Ansicht von oben, ein Pixel pro Block. Mit der Maus ziehen und scrollen, mit dem Finger ziehen und die Tasten benutzen. Die Karte zeigt nur Gebiete, die schon einmal geladen waren, und wird alle paar Minuten aktualisiert. Spielerpunkte nur für die gezeigte Dimension.</p>
+</main>
+<script src="nav.js"></script>
+<script>
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),info=document.getElementById("info");
+var dim="overworld",index={},cx=0,cz=0,scale=1,players=[],imgs={},drag=null,dirty=true;
+function size(){var r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);dirty=true}
+function lvl(){return scale>=0.5?0:1}
+function tileImg(l,tx,tz){
+  var k=dim+"/"+l+"/"+tx+"_"+tz,e=imgs[k];
+  if(e)return e.ok?e.img:null;
+  var img=new Image();e={img:img,ok:false};imgs[k]=e;
+  img.onload=function(){e.ok=true;dirty=true};
+  img.src="karte/"+k+".png?"+(window.__v||0);
+  return null;
+}
+function draw(){
+  dirty=false;
+  var d=window.devicePixelRatio||1,w=cv.width,h=cv.height;
+  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle="#0c0e11";ctx.fillRect(0,0,w,h);
+  var s=scale*d,l=lvl(),tb=l===0?256:1024;
+  ctx.imageSmoothingEnabled=s<1;
+  var left=cx-w/2/s,top=cz-h/2/s,right=cx+w/2/s,bot=cz+h/2/s;
+  var set=(index[dim]&&index[dim][l])||[];
+  var have={};set.forEach(function(n){have[n]=1});
+  for(var tz=Math.floor(top/tb);tz<=Math.floor(bot/tb);tz++)for(var tx=Math.floor(left/tb);tx<=Math.floor(right/tb);tx++){
+    if(!have[tx+"_"+tz])continue;
+    var im=tileImg(l,tx,tz);if(!im)continue;
+    ctx.drawImage(im,Math.round((tx*tb-left)*s),Math.round((tz*tb-top)*s),Math.ceil(tb*s),Math.ceil(tb*s));
+  }
+  // origin cross and players
+  ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=1;
+  var ox=(0-left)*s,oz=(0-top)*s;ctx.beginPath();ctx.moveTo(ox-8,oz);ctx.lineTo(ox+8,oz);ctx.moveTo(ox,oz-8);ctx.lineTo(ox,oz+8);ctx.stroke();
+  ctx.font=(12*d)+"px system-ui,sans-serif";ctx.textBaseline="middle";
+  players.forEach(function(p){
+    var px=(p.x-left)*s,pz=(p.z-top)*s;
+    ctx.fillStyle="#f87171";ctx.strokeStyle="#fff";ctx.lineWidth=2*d;ctx.beginPath();ctx.arc(px,pz,5*d,0,6.3);ctx.fill();ctx.stroke();
+    var t=(p.title?"["+p.title+"] ":"")+p.name,tw=ctx.measureText(t).width;
+    ctx.fillStyle="rgba(0,0,0,.65)";ctx.fillRect(px+8*d,pz-9*d,tw+8*d,18*d);ctx.fillStyle="#fff";ctx.fillText(t,px+12*d,pz);
+  });
+}
+function loop(){if(dirty)draw();requestAnimationFrame(loop)}
+function screenToWorld(ex,ey){var r=cv.getBoundingClientRect();return [cx+(ex-r.left-r.width/2)/scale,cz+(ey-r.top-r.height/2)/scale]}
+function setScale(ns,ex,ey){
+  ns=Math.max(0.02,Math.min(8,ns));
+  var r=cv.getBoundingClientRect();if(ex===undefined){ex=r.left+r.width/2;ey=r.top+r.height/2}
+  var w=screenToWorld(ex,ey);scale=ns;
+  cx=w[0]-(ex-r.left-r.width/2)/scale;cz=w[1]-(ey-r.top-r.height/2)/scale;dirty=true;
+}
+cv.addEventListener("pointerdown",function(e){cv.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY};cv.style.cursor="grabbing"});
+cv.addEventListener("pointermove",function(e){
+  var w=screenToWorld(e.clientX,e.clientY);info.textContent="X "+Math.round(w[0])+"  Z "+Math.round(w[1])+"   Zoom "+scale.toFixed(2);
+  if(!drag)return;cx-=(e.clientX-drag.x)/scale;cz-=(e.clientY-drag.y)/scale;drag={x:e.clientX,y:e.clientY};dirty=true});
+cv.addEventListener("pointerup",function(){drag=null;cv.style.cursor="grab"});
+cv.addEventListener("wheel",function(e){e.preventDefault();setScale(scale*(e.deltaY<0?1.25:0.8),e.clientX,e.clientY)},{passive:false});
+document.getElementById("zin").onclick=function(){setScale(scale*1.5)};
+document.getElementById("zout").onclick=function(){setScale(scale/1.5)};
+document.getElementById("zhome").onclick=function(){home()};
+function home(){
+  var set=(index[dim]&&index[dim]["1"])||[];
+  if(!set.length){cx=0;cz=0;scale=1;dirty=true;return}
+  // start at the median of the known tiles (single far away chunks must not push the view into the void)
+  var xs=[],zs=[];set.forEach(function(n){var p=n.split("_");xs.push(+p[0]);zs.push(+p[1])});
+  xs.sort(function(a,b){return a-b});zs.sort(function(a,b){return a-b});
+  cx=xs[Math.floor(xs.length/2)]*1024+512;cz=zs[Math.floor(zs.length/2)]*1024+512;scale=0.25;dirty=true;
+}
+document.getElementById("tabs").onclick=function(e){var b=e.target.closest("button");if(!b)return;dim=b.dataset.d;
+  Array.prototype.forEach.call(document.querySelectorAll("#tabs button"),function(x){x.className=x===b?"on":""});loadPlayers();home()};
+function loadPlayers(){
+  getJSON("data/status.json").then(function(s){
+    var key={overworld:"minecraft:overworld",nether:"minecraft:the_nether",end:"minecraft:the_end"}[dim];
+    players=(s.players||[]).filter(function(p){return p.dimension===key&&typeof p.x==="number"});dirty=true;
+  }).catch(function(){});
+}
+function loadIndex(first){
+  getJSON("karte/index.json").then(function(d){
+    index=d;window.__v=Date.now();imgs={};
+    var n=0;Object.keys(d).forEach(function(k){n+=(d[k]["0"]||[]).length});
+    document.getElementById("state").textContent=n?n+" Kacheln. Zuletzt geladen "+new Date().toLocaleTimeString("de-DE")+".":"Noch keine Kartendaten.";
+    if(first)home();dirty=true;
+  }).catch(function(){document.getElementById("state").textContent="Noch keine Kartendaten."});
+}
+window.addEventListener("resize",size);
+size();loadIndex(true);loadPlayers();
+setInterval(loadPlayers,30000);setInterval(function(){loadIndex(false)},180000);
+loop();
+</script>
+</body>
+</html>
